@@ -1,0 +1,81 @@
+[gd_scene format=3 uid="uid://dhq4igrewru4m"]
+
+[ext_resource type="Script" uid="uid://c16ifgi1avpi2" path="res://player.gd" id="1_ig7tw"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_412yk"]
+size = Vector2(20, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lc11c"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_q0mqc"]
+radius = 5.0
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_q0mqc"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_q0mqc"]
+size = Vector2(577, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_412yk"]
+size = Vector2(20, 324)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_xjx5q"]
+size = Vector2(20, 322)
+
+[node name="main" type="Node2D" unique_id=399973801]
+
+[node name="player" type="CharacterBody2D" parent="." unique_id=4645644]
+script = ExtResource("1_ig7tw")
+
+[node name="mesh" type="MeshInstance2D" parent="player" unique_id=660076997]
+mesh = SubResource("QuadMesh_412yk")
+
+[node name="coll" type="CollisionShape2D" parent="player" unique_id=1658506101]
+shape = SubResource("RectangleShape2D_lc11c")
+
+[node name="hitbox" type="CollisionShape2D" parent="player" unique_id=2029272242]
+shape = SubResource("CircleShape2D_q0mqc")
+
+[node name="dash_timer" type="Timer" parent="player" unique_id=2073573776]
+wait_time = 0.2
+one_shot = true
+ignore_time_scale = true
+
+[node name="coyote_timer" type="Timer" parent="player" unique_id=1266216557]
+
+[node name="floor" type="StaticBody2D" parent="." unique_id=970430886]
+position = Vector2(0, 163)
+
+[node name="coll" type="CollisionShape2D" parent="floor" unique_id=303259387]
+shape = SubResource("WorldBoundaryShape2D_q0mqc")
+
+[node name="camera" type="Camera2D" parent="." unique_id=1380088480]
+zoom = Vector2(2, 2)
+
+[node name="ceil" type="StaticBody2D" parent="." unique_id=821424847]
+position = Vector2(0, -173)
+
+[node name="coll" type="CollisionShape2D" parent="ceil" unique_id=399773518]
+shape = SubResource("RectangleShape2D_q0mqc")
+
+[node name="left" type="StaticBody2D" parent="." unique_id=1477147170]
+position = Vector2(-299, 0)
+
+[node name="coll" type="CollisionShape2D" parent="left" unique_id=489553809]
+shape = SubResource("RectangleShape2D_412yk")
+
+[node name="right" type="StaticBody2D" parent="." unique_id=897990894]
+position = Vector2(300, 0)
+
+[node name="coll" type="CollisionShape2D" parent="right" unique_id=2142670919]
+shape = SubResource("RectangleShape2D_xjx5q")
+
+[node name="Label" type="Label" parent="." unique_id=51259854]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="Label2" type="Label" parent="." unique_id=808427805]
+offset_left = 57.0
+offset_right = 97.0
+offset_bottom = 23.0
+
+[connection signal="timeout" from="player/dash_timer" to="player" method="_on_dash_timer_timeout"]

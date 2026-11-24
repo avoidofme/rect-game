@@ -1,0 +1,112 @@
+extends CharacterBody2D
+@onready var dash_timer: Timer = $dash_timer
+@onready var coyote_timer: Timer = $coyote_timer
+
+const SPEED = 100.0
+const JUMP_VELOCITY = -600.0
+var is_grounded = false
+
+var is_jumping = false
+var can_jump = false
+var max_jump = 1
+var jump_avail = max_jump
+
+var is_running = false
+
+var is_reverse = false
+var can_reverse = true
+var max_reverse = 2
+var reverse_avail = max_reverse
+
+var is_dashing = false
+var dash_dir = null
+
+func _physics_process(delta: float) -> void:
+	is_running = false
+	can_reverse = true if reverse_avail > 0 else false
+	
+	if is_dashing: $hitbox.visible = false
+	else: $hitbox.visible = true
+	
+	# set grounded
+	if is_reverse:
+		if is_on_ceiling(): is_grounded = true
+		else: is_grounded = false
+	else:
+		if is_on_floor(): is_grounded = true
+		else: is_grounded = false
+	
+	# if normal
+	if not is_on_floor() and not is_reverse:
+		velocity += get_gravity() * delta
+	
+	# if reverse
+	if not is_on_ceiling() and is_reverse:
+		velocity += -get_gravity() * delta
+	
+	# Handle jump.
+	if Input.is_action_just_pressed("jump") and is_grounded:
+		is_grounded = false
+		velocity.y = -JUMP_VELOCITY if is_reverse else JUMP_VELOCITY
+	
+	if Input.is_action_just_released("jump"):
+		if not is_reverse and velocity.y < 0:
+			velocity.y *= 0.5
+		elif is_reverse and velocity.y > 0:
+			velocity.y *= 0.5
+	
+	# reverse
+	if Input.is_action_just_pressed("reverse") and can_reverse:
+		is_grounded = false
+		reverse_avail -= 1
+		is_reverse = not is_reverse
+
+	# move
+	var direction := Input.get_axis("left", "right")
+	if Input.is_action_pressed("run"):
+		is_running = true
+	if direction:
+		var speed = SPEED
+		if is_running:
+			speed *= 2
+		if not is_grounded:
+			speed *= 0.6
+		if is_dashing:
+			speed = SPEED * 50
+		velocity.x = direction * speed
+	else:
+		velocity.x = move_toward(velocity.x, 0, SPEED)
+	
+	# reset available reverse
+	if is_grounded:
+		reverse_avail = max_reverse
+	
+	is_dashing = false
+	
+	# wall slide, not yet
+	if is_on_wall():
+		if velocity.y > 0.5 and not is_reverse:
+			velocity.y *= 0.5
+		elif velocity.y < 0.5 and is_reverse:
+			velocity.y *= 0.5
+	
+	# apply move
+	move_and_slide()
+
+func _input(e: InputEvent) -> void:
+	if e.is_action_pressed("left"):
+		if dash_dir == "l":
+			is_dashing = true
+		else:
+			dash_timer.start()
+			dash_dir = "l"
+	elif e.is_action_pressed("right"):
+		if dash_dir == "r":
+			is_dashing = true
+		else:
+			dash_timer.start()
+			dash_dir = "r"
+
+
+func _on_dash_timer_timeout() -> void:
+	dash_dir = null

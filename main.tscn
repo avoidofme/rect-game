@@ -40,7 +40,13 @@ wait_time = 0.2
 one_shot = true
 ignore_time_scale = true
 
-[node name="coyote_timer" type="Timer" parent="player" unique_id=1266216557]
+[node name="dashing_timer" type="Timer" parent="player" unique_id=1304713808]
+wait_time = 0.2
+one_shot = true
+
+[node name="jump_buffer_timer" type="Timer" parent="player" unique_id=1266216557]
+wait_time = 0.12
+one_shot = true
 
 [node name="floor" type="StaticBody2D" parent="." unique_id=970430886]
 position = Vector2(0, 163)
@@ -79,3 +85,4 @@ offset_right = 97.0
 offset_bottom = 23.0
 
 [connection signal="timeout" from="player/dash_timer" to="player" method="_on_dash_timer_timeout"]
+[connection signal="timeout" from="player/jump_buffer_timer" to="player" method="_on_jump_buffer_timer_timeout"]

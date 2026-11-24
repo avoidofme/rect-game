@@ -1,15 +1,20 @@
 extends CharacterBody2D
 @onready var dash_timer: Timer = $dash_timer
-@onready var coyote_timer: Timer = $coyote_timer
+@onready var dashing_timer: Timer = $dashing_timer
+@onready var jump_buffer_timer: Timer = $jump_buffer_timer
 
-const SPEED = 100.0
-const JUMP_VELOCITY = -600.0
+const speed = 100.0
+const jump_vel = -200.0
+var jump_vel_avail = jump_vel
+
 var is_grounded = false
 
 var is_jumping = false
 var can_jump = false
 var max_jump = 1
 var jump_avail = max_jump
+
+var jump_buffer = false
 
 var is_running = false
 
@@ -20,6 +25,9 @@ var reverse_avail = max_reverse
 
 var is_dashing = false
 var dash_dir = null
+
+func _process(delta: float) -> void:
+	$"../Label".text = str(can_jump)
 
 func _physics_process(delta: float) -> void:
 	is_running = false
@@ -44,12 +52,26 @@ func _physics_process(delta: float) -> void:
 	if not is_on_ceiling() and is_reverse:
 		velocity += -get_gravity() * delta
 	
+	if is_grounded:
+		can_jump = true
+		jump_vel_avail = jump_vel
+		reverse_avail = max_reverse
+	else:
+		can_jump = false
+	
 	# Handle jump.
-	if Input.is_action_just_pressed("jump") and is_grounded:
-		is_grounded = false
-		velocity.y = -JUMP_VELOCITY if is_reverse else JUMP_VELOCITY
+	if (Input.is_action_just_pressed("jump") or jump_buffer) and (can_jump or is_jumping):
+		is_jumping = true
+		can_jump = false
+		if jump_vel_avail < -1:
+			velocity.y += -jump_vel_avail if is_reverse else jump_vel_avail
+			jump_vel_avail *= 0.7
+		else:
+			is_jumping = false
+			velocity.y *= 0.5
 	
 	if Input.is_action_just_released("jump"):
+		is_jumping = false
 		if not is_reverse and velocity.y < 0:
 			velocity.y *= 0.5
 		elif is_reverse and velocity.y > 0:
@@ -66,20 +88,13 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("run"):
 		is_running = true
 	if direction:
-		var speed = SPEED
-		if is_running:
-			speed *= 2
-		if not is_grounded:
-			speed *= 0.6
-		if is_dashing:
-			speed = SPEED * 50
-		velocity.x = direction * speed
+		var _speed = speed
+		if is_running: _speed *= 2
+		if not is_grounded: _speed *= 0.6
+		if is_dashing: _speed = speed * 50
+		velocity.x = direction * _speed
 	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
-	
-	# reset available reverse
-	if is_grounded:
-		reverse_avail = max_reverse
+		velocity.x = move_toward(velocity.x, 0, speed)
 	
 	is_dashing = false
 	
@@ -94,6 +109,12 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func _input(e: InputEvent) -> void:
+	if e.is_action_pressed("ui_cancel"): get_tree().quit()
+	
+	if e.is_action_pressed("jump"):
+		jump_buffer_timer.start()
+		jump_buffer = true
+	
 	if e.is_action_pressed("left"):
 		if dash_dir == "l":
 			is_dashing = true
@@ -110,3 +131,7 @@ func _input(e: InputEvent) -> void:
 
 func _on_dash_timer_timeout() -> void:
 	dash_dir = null
+
+
+func _on_jump_buffer_timer_timeout() -> void:
+	jump_buffer = false

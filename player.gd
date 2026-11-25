@@ -6,8 +6,12 @@ extends CharacterBody2D
 const speed = 100.0
 const jump_vel = -200.0
 var jump_vel_avail = jump_vel
+var facing_right = true
 
 var is_grounded = false
+
+var is_wall_slide = false
+var wall_jump_vel = -500
 
 var is_jumping = false
 var can_jump = false
@@ -27,7 +31,7 @@ var is_dashing = false
 var dash_dir = null
 
 func _process(delta: float) -> void:
-	$"../Label".text = str(can_jump)
+	$"../Label".text = str(facing_right)
 
 func _physics_process(delta: float) -> void:
 	is_running = false
@@ -53,6 +57,8 @@ func _physics_process(delta: float) -> void:
 		velocity += -get_gravity() * delta
 	
 	if is_grounded:
+		is_wall_slide = false
+		is_jumping = false
 		can_jump = true
 		jump_vel_avail = jump_vel
 		reverse_avail = max_reverse
@@ -60,7 +66,11 @@ func _physics_process(delta: float) -> void:
 		can_jump = false
 	
 	# Handle jump.
-	if (Input.is_action_just_pressed("jump") or jump_buffer) and (can_jump or is_jumping):
+	if Input.is_action_just_pressed("jump") and is_wall_slide:
+		velocity.y = -wall_jump_vel if is_reverse else  wall_jump_vel
+		velocity.x = wall_jump_vel if facing_right else -wall_jump_vel
+	
+	if (Input.is_action_pressed("jump") or jump_buffer) and (can_jump or is_jumping):
 		is_jumping = true
 		can_jump = false
 		if jump_vel_avail < -1:
@@ -69,8 +79,11 @@ func _physics_process(delta: float) -> void:
 		else:
 			is_jumping = false
 			velocity.y *= 0.5
+		if jump_buffer:
+			jump_buffer = false
+
 	
-	if Input.is_action_just_released("jump"):
+	if Input.is_action_just_released("jump") and is_jumping:
 		is_jumping = false
 		if not is_reverse and velocity.y < 0:
 			velocity.y *= 0.5
@@ -88,18 +101,28 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_pressed("run"):
 		is_running = true
 	if direction:
+		var old_facing_right = facing_right
+		facing_right = true if direction > 0 else false
+		
 		var _speed = speed
 		if is_running: _speed *= 2
 		if not is_grounded: _speed *= 0.6
 		if is_dashing: _speed = speed * 50
-		velocity.x = direction * _speed
+		
+		if is_wall_slide:
+			if not (old_facing_right == facing_right):
+				velocity.x = direction * _speed
+		else:
+			velocity.x = direction * _speed
 	else:
 		velocity.x = move_toward(velocity.x, 0, speed)
 	
 	is_dashing = false
+	is_wall_slide = false
 	
 	# wall slide, not yet
 	if is_on_wall():
+		is_wall_slide = true
 		if velocity.y > 0.5 and not is_reverse:
 			velocity.y *= 0.5
 		elif velocity.y < 0.5 and is_reverse:

@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://dhq4igrewru4m"]
 
 [ext_resource type="Script" uid="uid://c16ifgi1avpi2" path="res://player.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://bp8rf5afn0klj" path="res://ball.gd" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://d0vrgfj4wmlq5" path="res://rocket.gd" id="3_h2yge"]
+[ext_resource type="Script" uid="uid://dwyhej42htavl" path="res://drone.gd" id="4_1bvp3"]
 
 [sub_resource type="QuadMesh" id="QuadMesh_412yk"]
 size = Vector2(20, 20)
@@ -21,9 +24,19 @@ size = Vector2(20, 324)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xjx5q"]
 size = Vector2(20, 322)
 
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_q0mqc"]
+bounce = 0.8
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_tnrje"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_412yk"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_xjx5q"]
+
 [node name="main" type="Node2D" unique_id=399973801]
 
 [node name="player" type="CharacterBody2D" parent="." unique_id=4645644]
+collision_layer = 512
 script = ExtResource("1_ig7tw")
 
 [node name="mesh" type="MeshInstance2D" parent="player" unique_id=660076997]
@@ -32,7 +45,11 @@ mesh = SubResource("QuadMesh_412yk")
 [node name="coll" type="CollisionShape2D" parent="player" unique_id=1658506101]
 shape = SubResource("RectangleShape2D_lc11c")
 
-[node name="hitbox" type="CollisionShape2D" parent="player" unique_id=2029272242]
+[node name="hitbox" type="Area2D" parent="player" unique_id=437795530]
+collision_layer = 4
+collision_mask = 4
+
+[node name="coll" type="CollisionShape2D" parent="player/hitbox" unique_id=2029272242]
 shape = SubResource("CircleShape2D_q0mqc")
 
 [node name="dash_timer" type="Timer" parent="player" unique_id=2073573776]
@@ -48,32 +65,41 @@ one_shot = true
 wait_time = 0.12
 one_shot = true
 
-[node name="floor" type="StaticBody2D" parent="." unique_id=970430886]
-position = Vector2(0, 163)
+[node name="dash_cooldown" type="Timer" parent="player" unique_id=415604549]
 
-[node name="coll" type="CollisionShape2D" parent="floor" unique_id=303259387]
+[node name="borders" type="Node" parent="player" unique_id=1759526442]
+
+[node name="floor" type="StaticBody2D" parent="player/borders" unique_id=970430886]
+position = Vector2(0, 163)
+collision_layer = 1025
+collision_mask = 2
+
+[node name="coll" type="CollisionShape2D" parent="player/borders/floor" unique_id=303259387]
 shape = SubResource("WorldBoundaryShape2D_q0mqc")
+
+[node name="ceil" type="StaticBody2D" parent="player/borders" unique_id=821424847]
+position = Vector2(0, -173)
+collision_mask = 2
+
+[node name="coll" type="CollisionShape2D" parent="player/borders/ceil" unique_id=399773518]
+shape = SubResource("RectangleShape2D_q0mqc")
+
+[node name="left" type="StaticBody2D" parent="player/borders" unique_id=1477147170]
+position = Vector2(-299, 0)
+collision_mask = 2
+
+[node name="coll" type="CollisionShape2D" parent="player/borders/left" unique_id=489553809]
+shape = SubResource("RectangleShape2D_412yk")
+
+[node name="right" type="StaticBody2D" parent="player/borders" unique_id=897990894]
+position = Vector2(300, 0)
+collision_mask = 2
+
+[node name="coll" type="CollisionShape2D" parent="player/borders/right" unique_id=2142670919]
+shape = SubResource("RectangleShape2D_xjx5q")
 
 [node name="camera" type="Camera2D" parent="." unique_id=1380088480]
 zoom = Vector2(2, 2)
-
-[node name="ceil" type="StaticBody2D" parent="." unique_id=821424847]
-position = Vector2(0, -173)
-
-[node name="coll" type="CollisionShape2D" parent="ceil" unique_id=399773518]
-shape = SubResource("RectangleShape2D_q0mqc")
-
-[node name="left" type="StaticBody2D" parent="." unique_id=1477147170]
-position = Vector2(-299, 0)
-
-[node name="coll" type="CollisionShape2D" parent="left" unique_id=489553809]
-shape = SubResource("RectangleShape2D_412yk")
-
-[node name="right" type="StaticBody2D" parent="." unique_id=897990894]
-position = Vector2(300, 0)
-
-[node name="coll" type="CollisionShape2D" parent="right" unique_id=2142670919]
-shape = SubResource("RectangleShape2D_xjx5q")
 
 [node name="Label" type="Label" parent="." unique_id=51259854]
 offset_right = 40.0
@@ -84,5 +110,35 @@ offset_left = 57.0
 offset_right = 97.0
 offset_bottom = 23.0
 
+[node name="ball" type="RigidBody2D" parent="." unique_id=1423050265]
+position = Vector2(0, -145)
+collision_layer = 6
+collision_mask = 1028
+physics_material_override = SubResource("PhysicsMaterial_q0mqc")
+script = ExtResource("2_0xm2m")
+
+[node name="coll" type="CollisionShape2D" parent="ball" unique_id=1302826254]
+shape = SubResource("CircleShape2D_tnrje")
+
+[node name="respawn_timer" type="Timer" parent="ball" unique_id=1292311955]
+autostart = true
+
+[node name="rocket" type="StaticBody2D" parent="." unique_id=1891954985]
+position = Vector2(-328, 0)
+collision_layer = 6
+collision_mask = 4
+script = ExtResource("3_h2yge")
+
+[node name="coll" type="CollisionShape2D" parent="rocket" unique_id=1651606448]
+shape = SubResource("CircleShape2D_412yk")
+
+[node name="drone" type="StaticBody2D" parent="." unique_id=12543532]
+position = Vector2(-322, -145)
+script = ExtResource("4_1bvp3")
+
+[node name="coll" type="CollisionShape2D" parent="drone" unique_id=1245936638]
+shape = SubResource("CircleShape2D_xjx5q")
+
 [connection signal="timeout" from="player/dash_timer" to="player" method="_on_dash_timer_timeout"]
 [connection signal="timeout" from="player/jump_buffer_timer" to="player" method="_on_jump_buffer_timer_timeout"]
+[connection signal="timeout" from="ball/respawn_timer" to="ball" method="_on_respawn_timer_timeout"]
